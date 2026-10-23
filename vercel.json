@@ -1,12 +1,9 @@
 {
-  "redirects": [
+  "rewrites": [
     {
       "source": "/",
-      "destination": "/2026-SYH/",
-      "permanent": false
-    }
-  ],
-  "rewrites": [
+      "destination": "/2026-SYH/index.html"
+    },
     {
       "source": "/assets/:match*",
       "destination": "/2026-SYH/assets/:match*"

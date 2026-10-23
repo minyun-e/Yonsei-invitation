@@ -114,8 +114,83 @@
 
   .toast{position:fixed; left:50%; bottom:28px; transform:translate(-50%,20px); background:rgba(27,42,74,.94); color:#fff;
          font-family:"Noto Sans KR",sans-serif; font-size:14px; padding:11px 18px; border-radius:999px; opacity:0; pointer-events:none;
-         transition:.25s}
+         transition:.25s; z-index:1100}
   .toast.show{opacity:1; transform:translate(-50%,0)}
+
+  /* ── Calendar Bottom Sheet / Modal ── */
+  .cal-backdrop{
+    position:fixed; inset:0; background:rgba(18,29,54,.58);
+    backdrop-filter:blur(5px); -webkit-backdrop-filter:blur(5px);
+    z-index:1000; opacity:0; pointer-events:none;
+    transition:opacity .25s ease;
+    display:flex; align-items:flex-end; justify-content:center;
+  }
+  .cal-backdrop.active{opacity:1; pointer-events:auto}
+  .cal-sheet{
+    width:100%; max-width:440px; background:#fff;
+    border-radius:24px 24px 0 0;
+    box-shadow:0 -10px 40px rgba(18,29,54,.2);
+    padding:12px 20px 24px;
+    transform:translateY(100%);
+    transition:transform .28s cubic-bezier(0.16,1,0.3,1);
+    box-sizing:border-box;
+  }
+  @media (min-width:600px){
+    .cal-backdrop{align-items:center; padding:20px}
+    .cal-sheet{
+      border-radius:22px;
+      transform:translateY(24px) scale(.96);
+      box-shadow:0 18px 48px rgba(18,29,54,.25);
+    }
+  }
+  .cal-backdrop.active .cal-sheet{transform:translateY(0) scale(1)}
+  .cal-handle{
+    width:36px; height:4px; background:#ded8cc; border-radius:99px;
+    margin:4px auto 14px;
+  }
+  @media (min-width:600px){ .cal-handle{display:none} }
+  .cal-header{text-align:center; margin-bottom:18px}
+  .cal-header h3{
+    font-size:18px; font-weight:700; color:var(--navy);
+    font-family:"Noto Serif KR",serif; letter-spacing:-.01em; margin-bottom:4px;
+  }
+  .cal-header p{
+    font-size:12.5px; color:var(--muted); font-family:"Noto Sans KR",sans-serif;
+  }
+  .cal-options{display:flex; flex-direction:column; gap:10px; margin-bottom:14px}
+  .cal-opt{
+    display:flex; align-items:center; gap:14px; width:100%;
+    padding:13px 15px; background:var(--paper);
+    border:1px solid var(--gold-pale); border-radius:16px;
+    cursor:pointer; text-decoration:none; color:inherit; text-align:left;
+    font-family:inherit; appearance:none;
+    transition:all .15s ease; -webkit-tap-highlight-color:transparent;
+  }
+  .cal-opt:active, .cal-opt:hover{
+    background:#f4eee4; border-color:var(--gold-soft);
+    transform:translateY(-1px);
+  }
+  .cal-opt-icon{
+    width:40px; height:40px; border-radius:12px;
+    display:flex; align-items:center; justify-content:center;
+    flex:none; box-shadow:0 2px 6px rgba(0,0,0,.06);
+  }
+  .cal-opt-text{flex:1}
+  .cal-opt-title{
+    font-size:15px; font-weight:600; color:var(--navy);
+    font-family:"Noto Sans KR",sans-serif; line-height:1.3;
+  }
+  .cal-opt-desc{
+    font-size:12px; color:var(--muted); font-family:"Noto Sans KR",sans-serif; margin-top:2px;
+  }
+  .cal-opt-arrow{color:var(--gold); opacity:.6; flex:none}
+  .cal-close-btn{
+    width:100%; appearance:none; border:none; cursor:pointer;
+    font-family:"Noto Sans KR",sans-serif; font-size:14px; font-weight:500;
+    padding:13px; border-radius:14px; background:#f0ece4; color:#555a68;
+    transition:background .15s ease;
+  }
+  .cal-close-btn:active{background:#e4ded4}
 
   /* entrance animation */
   .rise{opacity:0; transform:translateY(14px); animation:rise .9s ease forwards}
@@ -206,6 +281,55 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- Calendar Selection Bottom Sheet / Modal -->
+<div class="cal-backdrop" id="calModal" aria-hidden="true">
+  <div class="cal-sheet" role="dialog" aria-modal="true" aria-labelledby="calTitle">
+    <div class="cal-handle" aria-hidden="true"></div>
+    <div class="cal-header">
+      <h3 id="calTitle">캘린더에 일정 추가</h3>
+      <p id="calSubtitle">11월 10일(화) 오후 7:00 · 우마주블랙 도곡점</p>
+    </div>
+    <div class="cal-options">
+      <!-- Google Calendar -->
+      <a class="cal-opt" id="optGoogle" target="_blank" rel="noopener">
+        <div class="cal-opt-icon" style="background:#fff; border:1px solid #e5e7eb;">
+          <svg width="22" height="22" viewBox="0 0 24 24"><path fill="#4285F4" d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/><rect x="7" y="12" width="4" height="4" fill="#4285F4"/></svg>
+        </div>
+        <div class="cal-opt-text">
+          <div class="cal-opt-title">Google 캘린더</div>
+          <div class="cal-opt-desc">웹/앱에서 바로 일정 저장</div>
+        </div>
+        <svg class="cal-opt-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+      </a>
+
+      <!-- Apple & Default Calendar (.ics) -->
+      <button type="button" class="cal-opt" id="optApple">
+        <div class="cal-opt-icon" style="background:#1b2a4a; color:#fff;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+        <div class="cal-opt-text">
+          <div class="cal-opt-title">Apple / 기기 기본 캘린더</div>
+          <div class="cal-opt-desc">아이폰·맥·갤럭시 캘린더 앱 연동 (.ics)</div>
+        </div>
+        <svg class="cal-opt-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+
+      <!-- Naver Calendar -->
+      <a class="cal-opt" id="optNaver" target="_blank" rel="noopener">
+        <div class="cal-opt-icon" style="background:#03C75A; color:#fff;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M16.273 12.845L7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727z"/></svg>
+        </div>
+        <div class="cal-opt-text">
+          <div class="cal-opt-title">네이버 캘린더</div>
+          <div class="cal-opt-desc">네이버 웹/앱 캘린더에 등록</div>
+        </div>
+        <svg class="cal-opt-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+      </a>
+    </div>
+    <button type="button" class="cal-close-btn" id="calCloseBtn">닫기</button>
+  </div>
+</div>
+
 <script>
 /* ============================================
    ✏️ 여기만 수정하면 됩니다
@@ -250,22 +374,77 @@ function tick(){
 }
 const timer = setInterval(tick, 1000); tick();
 
-/* calendar (.ics) */
-$('calBtn').onclick = () => {
-  const f = s => new Date(s).toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');
-  const loc = (CONFIG.placeSub ? CONFIG.placeName + ', ' + CONFIG.placeSub.replace(/\n/g,' ') : CONFIG.placeName).replace(/,/g,'\\,');
-  const ics = [
-    'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//invite//KO','CALSCALE:GREGORIAN','BEGIN:VEVENT',
-    'UID:eye-yearend-2026@invite','DTSTAMP:'+f(new Date().toISOString()),
-    'DTSTART:'+f(CONFIG.start),'DTEND:'+f(CONFIG.end),
-    'SUMMARY:'+CONFIG.title,'LOCATION:'+loc,'DESCRIPTION:'+location.href,
-    'BEGIN:VALARM','TRIGGER:-P1D','ACTION:DISPLAY','DESCRIPTION:'+CONFIG.title,'END:VALARM',
-    'END:VEVENT','END:VCALENDAR'
-  ].join('\r\n');
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([ics], {type:'text/calendar;charset=utf-8'}));
-  a.download = 'yearend-2026.ics'; document.body.appendChild(a); a.click(); a.remove();
+/* calendar links & actions */
+const loc = (CONFIG.placeSub ? CONFIG.placeName + ', ' + CONFIG.placeSub.replace(/\n/g,' ') : CONFIG.placeName);
+const fUtc = s => new Date(s).toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');
+
+const padZero = n => String(n).padStart(2, '0');
+const formatNaverDate = iso => {
+  const d = new Date(iso);
+  return `${d.getFullYear()}-${padZero(d.getMonth() + 1)}-${padZero(d.getDate())} ${padZero(d.getHours())}:${padZero(d.getMinutes())}:${padZero(d.getSeconds())}`;
 };
+
+// Google Calendar URL
+$('optGoogle').href = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(CONFIG.title)}&dates=${fUtc(CONFIG.start)}/${fUtc(CONFIG.end)}&location=${encodeURIComponent(loc)}&details=${encodeURIComponent(CONFIG.title + '\n' + location.href)}`;
+
+// Naver Calendar URL
+$('optNaver').href = `https://calendar.naver.com/record/scheduleForm.nhn?title=${encodeURIComponent(CONFIG.title)}&start=${encodeURIComponent(formatNaverDate(CONFIG.start))}&end=${encodeURIComponent(formatNaverDate(CONFIG.end))}&location=${encodeURIComponent(loc)}&contents=${encodeURIComponent(CONFIG.title + '\n' + location.href)}`;
+
+// Apple & Default ICS generator
+function downloadIcs() {
+  const locSafe = loc.replace(/,/g, '\\,');
+  const ics = [
+    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Yonsei Eye Invitation//KO', 'CALSCALE:GREGORIAN',
+    'BEGIN:VEVENT',
+    'UID:eye-yearend-2026@invite',
+    'DTSTAMP:' + fUtc(new Date().toISOString()),
+    'DTSTART:' + fUtc(CONFIG.start),
+    'DTEND:' + fUtc(CONFIG.end),
+    'SUMMARY:' + CONFIG.title,
+    'LOCATION:' + locSafe,
+    'DESCRIPTION:' + location.href,
+    'BEGIN:VALARM', 'TRIGGER:-P1D', 'ACTION:DISPLAY', 'DESCRIPTION:' + CONFIG.title, 'END:VALARM',
+    'END:VEVENT', 'END:VCALENDAR'
+  ].join('\r\n');
+  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'yearend-2026.ics';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => a.remove(), 100);
+}
+
+// Modal controls
+function openCalModal() {
+  $('calModal').classList.add('active');
+  $('calModal').setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+}
+function closeCalModal() {
+  $('calModal').classList.remove('active');
+  $('calModal').setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+}
+
+$('calBtn').onclick = openCalModal;
+$('calCloseBtn').onclick = closeCalModal;
+$('calModal').onclick = e => {
+  if (e.target === $('calModal')) closeCalModal();
+};
+$('optApple').onclick = () => {
+  downloadIcs();
+  closeCalModal();
+  toast('캘린더 파일이 다운로드되었습니다');
+};
+$('optGoogle').onclick = () => { closeCalModal(); };
+$('optNaver').onclick = () => { closeCalModal(); };
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && $('calModal').classList.contains('active')) {
+    closeCalModal();
+  }
+});
 
 /* share */
 $('shareBtn').onclick = async () => {

@@ -5,5 +5,11 @@
       "destination": "/2026-SYH/",
       "permanent": false
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/assets/:match*",
+      "destination": "/2026-SYH/assets/:match*"
+    }
   ]
 }
